@@ -4,8 +4,152 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Node.js File Server</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f4f8;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            background-color: #4f46e5;
+            color: white;
+            width: 100%;
+            padding: 20px 0;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 2em;
+        }
+
+        main {
+            width: 90%;
+            max-width: 600px;
+            margin: 30px 0;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        input[type="file"] {
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            background-color: #4f46e5;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #3730a3;
+        }
+
+        .images-container {
+            margin-top: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 15px;
+        }
+
+        .images-container img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            transition: transform 0.2s;
+        }
+
+        .images-container img:hover {
+            transform: scale(1.05);
+        }
+
+        .message {
+            margin-top: 15px;
+            font-weight: bold;
+            color: green;
+        }
+
+        .error {
+            color: red;
+        }
+    </style>
 </head>
 <body>
-    <h1>Welcome to the Node.js File Server</h1>
+    <header>
+        <h1>Node.js File Server</h1>
+    </header>
+
+    <main>
+        <h2>Upload an Image</h2>
+        <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
+            <input type="file" name="file" accept="image/*" required>
+            <button type="submit">Upload</button>
+        </form>
+
+        <div class="message" id="message"></div>
+
+        <h3>Uploaded Images</h3>
+        <div class="images-container" id="imagesContainer"></div>
+    </main>
+
+    <script>
+        // Fetch uploaded images dynamically
+        async function loadImages() {
+            const response = await fetch('/images');
+            const images = await response.json();
+            const container = document.getElementById('imagesContainer');
+            container.innerHTML = images.map(img => `<img src="/uploads/${img}" alt="${img}">`).join('');
+        }
+
+        loadImages();
+
+        // Show success/error message after upload
+        const form = document.getElementById('uploadForm');
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(form);
+            const response = await fetch('/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            const messageDiv = document.getElementById('message');
+            if (response.ok) {
+                const result = await response.text();
+                messageDiv.textContent = result;
+                messageDiv.classList.remove('error');
+                loadImages(); // Refresh images
+            } else {
+                const error = await response.text();
+                messageDiv.textContent = error;
+                messageDiv.classList.add('error');
+            }
+
+            form.reset();
+        });
+    </script>
 </body>
 </html>
